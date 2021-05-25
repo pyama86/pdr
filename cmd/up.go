@@ -22,6 +22,13 @@ var upCmd = &cobra.Command{
 }
 
 func runUporDown(upordown []string) error {
+	if interactive {
+		f, err := getChoiceRepo()
+		if err != nil {
+			return err
+		}
+		filterRepo = f
+	}
 	for _, repo := range config.Repos {
 		if filterRepo != "" && !strings.Contains(repo.Path, filterRepo) {
 			continue
@@ -56,8 +63,10 @@ func runUpCommand() error {
 }
 
 var filterRepo string
+var interactive bool
 
 func init() {
 	upCmd.PersistentFlags().StringVar(&filterRepo, "repo", "", "target repository(default all)")
+	upCmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "choose target repository")
 	rootCmd.AddCommand(upCmd)
 }

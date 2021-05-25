@@ -12,6 +12,29 @@ import (
 	"github.com/peco/peco"
 )
 
+func getChoiceRepo() (string, error) {
+	dirs := []string{}
+	for _, r := range config.Repos {
+		dirs = append(dirs, r.Path)
+	}
+
+	var choice = bytes.Buffer{}
+	pecoCli := peco.New()
+	pecoCli.Argv = nil
+	pecoCli.Stdin = bytes.NewBufferString(strings.Join(dirs, "\n"))
+	pecoCli.Stdout = &choice
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if err := pecoCli.Run(ctx); err != nil {
+		if reflect.TypeOf(err).Name() == "errCollectResults" {
+			pecoCli.PrintResults()
+		} else {
+			return "", err
+		}
+	}
+	return strings.Replace(choice.String(), "\n", "", 1), nil
+}
 func getContainerName() (string, error) {
 	ctx := context.Background()
 	cli, err := client.NewEnvClient()

@@ -23,5 +23,6 @@ func runDownCommand() error {
 
 func init() {
 	downCmd.PersistentFlags().StringVar(&filterRepo, "repo", "", "target repository(default all)")
+	downCmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "choose target repository")
 	rootCmd.AddCommand(downCmd)
 }
