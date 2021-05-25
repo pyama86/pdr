@@ -1,0 +1,23 @@
+builds:
+  - binary: pdr
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+    ldflags:
+      -X github.com/pyama86/pdr/cmd.version={{.Version}}
+
+brew:
+  github:
+    owner: pyama86
+    name: homebrew-ptools
+  commit_author:
+    name: goreleaserbot
+    email: goreleaser@carlosbecker.com
+  description: "docker-compose cli wrapper"
+  homepage: "https://github.com/pyama86/pdr"
+  install: |
+    bin.install Dir['pdr']
+  test: |
+    system "#{bin}/pdr"
