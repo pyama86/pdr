@@ -7,8 +7,11 @@ import (
 )
 
 type Repo struct {
-	Path              string
-	UpPreHookCommands []string `mapstructure:"up_prehook_commands"`
+	Path                  string
+	Depends               []string
+	UpPreHookCommands     []string `mapstructure:"up_prehook_commands"`
+	DownPreHookCommands   []string `mapstructure:"down_prehook_commands"`
+	RemovePreHookCommands []string `mapstructure:"remove_prehook_commands"`
 }
 
 type Config struct {
@@ -24,5 +27,4 @@ func (c *Config) ReplacePath() {
 	for _, cc := range c.Repos {
 		cc.Path = strings.Replace(cc.Path, "~", home, 1)
 	}
-
 }

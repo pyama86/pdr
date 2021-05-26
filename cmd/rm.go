@@ -10,30 +10,30 @@ import (
 	funk "github.com/thoas/go-funk"
 )
 
-// downCmd represents the down command
-var downCmd = &cobra.Command{
-	Use:   "down",
-	Short: "run docker-compose down on each repository dir",
-	Long:  `Running docker-compose down command on each repository dir`,
+// rmCmd represents the rm command
+var rmCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "run docker-compose rm on each repository dir",
+	Long:  `Running docker-compose rm command on each repository dir`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := runDownCommand(); err != nil {
+		if err := runRemoveCommand(); err != nil {
 			logrus.Error(err)
 		}
 	},
 }
 
-func runDownCommand() error {
-	return choiceAndRunDockerCommand(recRunDownCommand)
+func runRemoveCommand() error {
+	return choiceAndRunDockerCommand(recRunRemoveCommand)
 }
 
-func recRunDownCommand(name string, repo *pdr.Repo, done map[string]bool) (map[string]bool, error) {
+func recRunRemoveCommand(name string, repo *pdr.Repo, done map[string]bool) (map[string]bool, error) {
 	if repo == nil {
 		logrus.Warnf("%s is notfound", name)
 	}
 	if !done[name] && repo != nil {
 		for dependName, r := range config.Repos {
 			if funk.ContainsString(r.Depends, name) && dependName != name {
-				d, err := recRunDownCommand(dependName, config.Repos[dependName], done)
+				d, err := recRunRemoveCommand(dependName, config.Repos[dependName], done)
 				if err != nil {
 					return nil, err
 				}
@@ -43,7 +43,7 @@ func recRunDownCommand(name string, repo *pdr.Repo, done map[string]bool) (map[s
 
 		if !done[name] {
 			logrus.Infof("on %s", repo.Path)
-			for _, c := range repo.DownPreHookCommands {
+			for _, c := range repo.RemovePreHookCommands {
 				cmd := exec.Command("/bin/bash", "-l", "-c", c)
 				cmd.Dir = repo.Path
 				cmd.Stdin = os.Stdin
@@ -54,7 +54,7 @@ func recRunDownCommand(name string, repo *pdr.Repo, done map[string]bool) (map[s
 				}
 			}
 
-			cmd := exec.Command("docker-compose", "down")
+			cmd := exec.Command("docker-compose", "rm", "-f")
 			cmd.Dir = repo.Path
 			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
@@ -69,7 +69,7 @@ func recRunDownCommand(name string, repo *pdr.Repo, done map[string]bool) (map[s
 }
 
 func init() {
-	downCmd.PersistentFlags().StringVar(&filterRepo, "repo", "", "target repository(default all)")
-	downCmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "choose target repository")
-	rootCmd.AddCommand(downCmd)
+	rmCmd.PersistentFlags().StringVar(&filterRepo, "repo", "", "target repository(default all)")
+	rmCmd.PersistentFlags().BoolVarP(&interactive, "interactive", "i", false, "choose target repository")
+	rootCmd.AddCommand(rmCmd)
 }

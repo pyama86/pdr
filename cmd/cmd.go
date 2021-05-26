@@ -10,8 +10,30 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/peco/peco"
+	"github.com/pyama86/pdr/pdr"
 )
 
+func choiceAndRunDockerCommand(f func(string, *pdr.Repo, map[string]bool) (map[string]bool, error)) error {
+	if interactive {
+		f, err := getChoiceRepo()
+		if err != nil {
+			return err
+		}
+		filterRepo = f
+	}
+	done := map[string]bool{}
+	for name, repo := range config.Repos {
+		if filterRepo != "" && !strings.Contains(repo.Path, filterRepo) {
+			continue
+		}
+
+		_, err := f(name, repo, done)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func getChoiceRepo() (string, error) {
 	dirs := []string{}
 	for _, r := range config.Repos {

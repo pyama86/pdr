@@ -3,8 +3,8 @@ package cmd
 import (
 	"os"
 	"os/exec"
-	"strings"
 
+	"github.com/pyama86/pdr/pdr"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -21,21 +21,27 @@ var upCmd = &cobra.Command{
 	},
 }
 
-func runUporDown(upordown []string) error {
-	if interactive {
-		f, err := getChoiceRepo()
-		if err != nil {
-			return err
-		}
-		filterRepo = f
-	}
-	for _, repo := range config.Repos {
-		if filterRepo != "" && !strings.Contains(repo.Path, filterRepo) {
-			continue
-		}
-		logrus.Infof("on %s", repo.Path)
+func runUpCommand() error {
+	return choiceAndRunDockerCommand(recRunUpCommand)
+}
 
-		if upordown[0] == "up" {
+func recRunUpCommand(name string, repo *pdr.Repo, done map[string]bool) (map[string]bool, error) {
+	if repo == nil {
+		logrus.Warnf("%s is notfound", name)
+	}
+	if !done[name] && repo != nil {
+		for _, depend := range repo.Depends {
+			if depend != name {
+				d, err := recRunUpCommand(depend, config.Repos[depend], done)
+				if err != nil {
+					return nil, err
+				}
+				done = d
+			}
+		}
+
+		if !done[name] {
+			logrus.Infof("on %s", repo.Path)
 			for _, c := range repo.UpPreHookCommands {
 				cmd := exec.Command("/bin/bash", "-l", "-c", c)
 				cmd.Dir = repo.Path
@@ -43,23 +49,22 @@ func runUporDown(upordown []string) error {
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				if err := cmd.Run(); err != nil {
-					return err
+					return nil, err
 				}
 			}
-		}
-		cmd := exec.Command("docker-compose", upordown...)
-		cmd.Dir = repo.Path
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return err
+
+			cmd := exec.Command("docker-compose", "up", "-d")
+			cmd.Dir = repo.Path
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				return nil, err
+			}
+			done[name] = true
 		}
 	}
-	return nil
-}
-func runUpCommand() error {
-	return runUporDown([]string{"up", "-d"})
+	return done, nil
 }
 
 var filterRepo string
