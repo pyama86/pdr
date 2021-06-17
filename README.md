@@ -2,6 +2,11 @@
 
 pyama docker revolution.
 
+## install
+```
+$ brew tap pyama86/homebrew-ptools 
+$ brew install pdr
+```
 ## configure
 - ~/.pdr
 
@@ -9,6 +14,10 @@ pyama docker revolution.
 repos:
   STNS:
     path: "~/src/github.com/STNS/STNS"
+  libnss:
+    path: "~/src/github.com/STNS/STNS"
+    depends:
+      - STNS
 ```
 
 ## usage
