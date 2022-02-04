@@ -5,6 +5,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     ldflags:
       -X github.com/pyama86/pdr/cmd.version={{.Version}}
 
